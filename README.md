@@ -18,20 +18,28 @@ This script uses the OpenAI GPT-3.5 language model to improve the text content o
 3. Define the prompt message for text improvement.
 
 ```python
+import os
+import openai
+import json
+import time
+
 # Set OpenAI API key
 openai.api_key = input("Please enter your OpenAI API key: ")
 
-# Prompt for source and target directories and processed files list file location
+# prompt for source and target directories and processed files list file location
 source_dir = input('Please enter the path to the source directory: ')
 target_dir = input('Please enter the path to the target directory: ')
+
 processed_files_file = input('Please enter the path to the processed files list file (will be created if it does not exist): ')
+if not processed_files_file:
+    processed_files_file = os.path.join(target_dir, 'processed_files.json')
 
 # Prompt for temperature, model, and prompt message
 temperature = float(input('Please enter the temperature for the model (between 0 and 1): '))
 model = input('Please enter the model to be used (gpt-4, etc.): ')
 prompt_message = input('Please enter the prompt message: ')
 
-# Load the list of processed files and unprocessable files (if available)
+# load the list of processed files and unprocessable files
 try:
     with open(processed_files_file, 'r') as file:
         file_data = json.load(file)
@@ -41,7 +49,9 @@ except FileNotFoundError:
     processed_files = []
     unprocessable_files = []
 
-# Define the get_completion function
+# make sure the target directory exists
+os.makedirs(target_dir, exist_ok=True)
+
 def get_completion(prompt, model=model, temperature=temperature):
     messages = [
         {
@@ -62,7 +72,6 @@ def get_completion(prompt, model=model, temperature=temperature):
 
     return response.choices[0].message["content"]
 
-# Iterate through files, process them, and save the improved content
 for filename in os.listdir(source_dir):
     # we only want to process .txt files and those that haven't been processed yet or are unprocessable
     if filename.endswith('.txt') and filename not in processed_files and filename not in unprocessable_files:
@@ -92,8 +101,9 @@ for filename in os.listdir(source_dir):
             with open(processed_files_file, 'w') as file:
                 json.dump({'processed_files': processed_files, 'unprocessable_files': unprocessable_files}, file)
 
-            # sleep for 12 seconds
+            # sleep for 10 seconds
             time.sleep(12)
+```
 
 ##Output
 The script processes .txt files in the source directory.
